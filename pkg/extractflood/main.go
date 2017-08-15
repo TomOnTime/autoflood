@@ -36,18 +36,61 @@ func ExtractFile(filename string) error {
 	// TODO(tlim): Error if bounds != (0,0)-(640,1136)
 	fmt.Println(bounds)
 
+	// Find a run of a color, record the run length.
+	//runtable := map[int]int{}
+	var runtable [999]int
+
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		if y < minY || y > maxY {
 			continue
 		}
+		first := true
+		var ar, ag, ab, aa uint32
+		var run int
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			if x < minX || x > maxX {
 				continue
 			}
 			r, g, b, a := m.At(x, y).RGBA()
-			fmt.Println(x, y, r, g, b, a)
+			//			r = r >> 12
+			//g = g >> 12
+			//b = b >> 12
+			//fmt.Printf("pixel %04x:%04d %02d %02d %02d %02x\n", x, y, r, g, b, a)
+			if first {
+				first = false
+				run = 1
+				ar, ag, ab, aa = r, g, b, a
+			} else {
+				if r == ar && g == ag && b == ab && a == aa {
+					run++
+				} else {
+					runtable[run&(0xffffff-3)]++
+					// fmt.Println(x, y, r, g, b, a, run)
+					run = 1
+					ar, ag, ab, aa = r, g, b, a
+				}
+			}
 		}
 	}
+	//	fmt.Printf("table\n%#v\n", runtable)
+	var size string
+	fmt.Println("table")
+	for irow, row := range runtable {
+		if row > 10 && row > 1000 {
+			//fmt.Println(irow, row)
+			switch irow {
+			case 24:
+				size = "large"
+			case 32, 64:
+				size = "medium"
+			case 44, 48:
+				size = "small"
+			default:
+			}
+		}
+	}
+
+	fmt.Printf("size: %s\n", size)
 
 	return nil
 }
