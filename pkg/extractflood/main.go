@@ -103,7 +103,11 @@ func ExtractFile(filename string) error {
 		for x := minX + (sz / 2); x < maxX; x = x + sz {
 			//r, g, b, a := m.At(x, y).RGBA()
 			//fmt.Printf(" %03d:%03d:%03d:%03x", r>>8, g>>8, b>>8, a>>8)
-			c := vote(m.At(x, y), m.At(x+1, y), m.At(x, y+1))
+			cl := []color.Color{m.At(x, y), m.At(x+1, y), m.At(x, y+1), m.At(x+1, y+1), m.At(x+1, y-1)}
+			c, err := vote(cl)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err)
+			}
 			fmt.Printf(" %s", letter(c))
 		}
 		fmt.Println()
@@ -112,21 +116,39 @@ func ExtractFile(filename string) error {
 	return nil
 }
 
-func vote(a, b, c color.Color) color.Color {
-	if a == b && b == c {
-		return a
+func vote(cl []color.Color) (color.Color, error) {
+
+	var err error
+
+	tally := map[string]int{}
+	//orig := map[string]color.Color{}
+
+	var max int
+	var maxc color.Color
+
+	for _, c := range cl {
+		r, g, b, _ := c.RGBA()
+		u := fmt.Sprintf("%04x%04x%04x", r, g, b)
+		//orig[u] = c
+		tally[u]++
+		if tally[u] > max {
+			max = tally[u]
+			maxc = c
+		}
 	}
-	if a == b {
-		return a
+
+	cm := 0
+	for _, v := range tally {
+		if v == max {
+			cm++
+		}
 	}
-	if a == c {
-		return a
+
+	if cm != 1 {
+		err = fmt.Errorf("no majority in %v\n", cl)
 	}
-	if b == c {
-		return b
-	}
-	fmt.Printf("warning: no majority %v %v %v\n", a, b, c)
-	return a
+
+	return maxc, err
 }
 
 func letter(c color.Color) string {
