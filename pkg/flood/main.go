@@ -20,8 +20,6 @@ type Buttons uint
 var letters = "ABCDEF"
 
 func (b Buttons) String() string {
-	//return letters[lastletter : lastletter+1]
-	//return fmt.Sprintf("%d", b)
 	return letters[b : b+1]
 }
 
@@ -158,13 +156,8 @@ func (g *Game) ExtractButtons() (err error) {
 			m.At(mx-1, bmy-(my)), m.At(mx, bmy-(my)), m.At(mx+1, bmy-(my)),
 			m.At(mx-1, bmy-(my+1)), m.At(mx, bmy-(my+1)), m.At(mx+1, bmy-(my+1)),
 		}
-		//		fmt.Printf("BUTTON %d: %d:%d %d:%d %d:%d\n",
-		//			n,
-		//			px, py,
-		//			mx, my,
-		//			widthX/nb/2,
-		//			widthY/2,
-		//		)
+		//		fmt.Printf("BUTTON %d: %d:%d %d:%d %d:%d\n", n, px, py,
+		//               mx, my, widthX/nb/2, widthY/2)
 		c, err := vote(cl)
 		if err != nil {
 			fmt.Printf("\nERROR: %s (c=%v)\n", err, c)
