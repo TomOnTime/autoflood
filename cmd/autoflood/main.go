@@ -66,5 +66,7 @@ func play(filename string) (err error) {
 	}
 	fmt.Println()
 
+	fmt.Println()
+
 	return nil
 }
