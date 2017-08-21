@@ -1,0 +1,8 @@
+
+
+Reverse range
+Prone to off-by-one errors.
+
+if err != nil {}
+Not just too much typing but also too many lines.
+

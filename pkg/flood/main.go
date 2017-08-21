@@ -1,9 +1,9 @@
-package extractflood
+package flood
 
 import (
+	"bytes"
 	"fmt"
 	"image"
-	"log"
 	"os"
 
 	"github.com/pkg/errors"
@@ -15,7 +15,48 @@ import (
 	// _ "image/jpeg"
 )
 
-func ExtractFile(filename string) error {
+type Buttons uint
+
+const (
+	Purple Buttons = iota
+	Blue
+	Green
+	Yellow
+	Red
+	Pink
+)
+
+var letters = "ABCDEF"
+
+func (b Buttons) String() string {
+	//return letters[lastletter : lastletter+1]
+	//return fmt.Sprintf("%d", b)
+	return letters[b : b+1]
+}
+
+type Game struct {
+	Image      image.Image
+	Level      string
+	Size       int
+	At         [][]Buttons
+	minX, minY int
+	maxX, maxY int
+	lenX, lenY int
+}
+
+func (g *Game) LoadImage(filename string) (err error) {
+	reader, err := os.Open(filename)
+	if err != nil {
+		return errors.Wrapf(err, "ExtractFile:")
+	}
+	defer reader.Close()
+
+	g.Image, _, err = image.Decode(reader)
+
+	return
+}
+
+func (g *Game) IdentifyLevel() (err error) {
 
 	// These are the boundaries of the game field.
 	// They were found by trial and error on an iPhone SE.
@@ -27,20 +68,12 @@ func ExtractFile(filename string) error {
 	var lenX = maxX - minX
 	var lenY = maxY - minY
 
-	reader, err := os.Open(filename)
-	if err != nil {
-		return errors.Wrapf(err, "ExtractFile:")
-	}
-	defer reader.Close()
+	m := g.Image
 
-	m, _, err := image.Decode(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
 	bounds := m.Bounds()
 	bmy := bounds.Max.Y
 	// TODO(tlim): Error if bounds != (0,0)-(640,1136)
-	fmt.Println(bounds)
+	fmt.Println("bounds = ", bounds)
 
 	// Find a run of a color, record the run length.
 	//runtable := map[int]int{}
@@ -81,8 +114,6 @@ func ExtractFile(filename string) error {
 	// medium   17   33       561
 	// large    22   25.5     561
 
-	var size string
-	var sz int
 	fmt.Println("table")
 	for irow, row := range runtable {
 		if irow == 0 {
@@ -92,28 +123,46 @@ func ExtractFile(filename string) error {
 			fmt.Println(irow, row)
 			switch irow {
 			case 24:
-				size = "LARGE"
-				sz = 22
+				g.Level = "LARGE"
+				g.Size = 22
 			case 32, 64:
-				size = "MEDIUM"
-				sz = 17
+				g.Level = "MEDIUM"
+				g.Size = 17
 			case 48:
-				size = "SMALL"
-				sz = 12
+				g.Level = "SMALL"
+				g.Size = 12
 			default:
 			}
 		}
 	}
-	fmt.Printf("size=%s\n", size)
-	widthX := lenX / sz
-	widthY := lenY / sz
+	fmt.Printf("boardsize=%s\n", g.Level)
+
+	g.minX, g.minY = minX, minY
+	g.maxX, g.maxY = maxX, maxY
+	g.lenX, g.lenY = lenX, lenY
+	return
+}
+
+func (g *Game) ExtractGrid() (err error) {
+	sz := g.Size
+	m := g.Image
+	bmy := m.Bounds().Max.Y
+
+	g.At = make([][]Buttons, sz)
+	for i := range g.At {
+		g.At[i] = make([]Buttons, sz)
+	}
+
+	widthX := g.lenX / g.Size
+	widthY := g.lenY / g.Size
 	fmt.Printf("widthX=%d widthY=%d\n", widthX, widthY)
 
+	// populate Grid
 	for y := sz - 1; y >= 0; y-- {
 		for x := 0; x < sz; x++ {
 			// pixel start of the square:
-			px := minX + (lenX * x / sz) // more accurate than (lenX/sz)*x + minX
-			py := minY + (lenY * y / sz) // more accurate than (lenY/sz)*y + minY
+			px := g.minX + (g.lenX * x / sz) // more accurate than (lenX/sz)*x + minX
+			py := g.minY + (g.lenY * y / sz) // more accurate than (lenY/sz)*y + minY
 			// Mid-point
 			mx := px + (widthX / 2)
 			my := py + (widthY / 2)
@@ -128,9 +177,11 @@ func ExtractFile(filename string) error {
 			if err != nil {
 				fmt.Printf("\nERROR: %s (c=%v)\n", err, c)
 			}
-			fmt.Printf(" %s", letter(c))
+			let := letter(c)
+			//fmt.Printf(" %s", let)
+			g.At[x][y] = let
 		}
-		fmt.Println()
+		//fmt.Println()
 	}
 
 	return nil
@@ -167,22 +218,37 @@ func vote(cl []color.Color) (color.Color, error) {
 	return maxc, err
 }
 
-var color2letter = map[string]string{}
-var lastletter int
-var letters = "ABCDEF"
+var color2letter = map[string]Buttons{}
+var lastletter Buttons
 
-func letter(c color.Color) string {
+func letter(c color.Color) Buttons {
 	r, g, b, _ := c.RGBA()
 	u := fmt.Sprintf("%04x%04x%04x", r>>12, g>>12, b>>12)
 	v, ok := color2letter[u]
 	if ok {
 		return v
 	}
-	newletter := letters[lastletter : lastletter+1]
+	color2letter[u] = lastletter
+	ret := lastletter
 	lastletter++
-	color2letter[u] = newletter
-	return newletter
+	return ret
+
+	//newletter := letters[lastletter : lastletter+1]
+	//lastletter++
+	//color2letter[u] = newletter
+	//return newletter
 
 	//r, g, b, _ := c.RGBA()
 	//return fmt.Sprintf(" (%d,%d,%d)", r, g, b)
+}
+
+func (g *Game) String() string {
+	b := bytes.NewBufferString("")
+	for y := g.Size - 1; y >= 0; y-- {
+		for x := 0; x < g.Size; x++ {
+			b.WriteString(fmt.Sprintf(" %v", g.At[x][y]))
+		}
+		b.WriteString("\n")
+	}
+	return b.String()
 }

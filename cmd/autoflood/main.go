@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TomOnTime/autoflood/pkg/extractflood"
+	"github.com/TomOnTime/autoflood/pkg/flood"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
@@ -26,7 +26,7 @@ func main() {
 		}
 		filename := c.Args().Get(0)
 		fmt.Printf("FILE=%q\n", filename)
-		return extractflood.ExtractFile(filename)
+		return play(filename)
 	}
 
 	err := app.Run(os.Args)
@@ -35,4 +35,27 @@ func main() {
 		os.Exit(1)
 	}
 
+}
+
+func play(filename string) (err error) {
+	var game flood.Game
+
+	err = game.LoadImage(filename)
+	if err != nil {
+		return
+	}
+
+	err = game.IdentifyLevel()
+	if err != nil {
+		return
+	}
+
+	err = game.ExtractGrid()
+	if err != nil {
+		return
+	}
+
+	fmt.Printf("%s\n", game.String())
+
+	return nil
 }
