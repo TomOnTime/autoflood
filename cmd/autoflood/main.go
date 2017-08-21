@@ -55,7 +55,16 @@ func play(filename string) (err error) {
 		return
 	}
 
-	fmt.Printf("%s\n", game.String())
+	err = game.ExtractButtons()
+	if err != nil {
+		return
+	}
+
+	fmt.Printf("%s", game.String())
+	for i, n := range game.ButtonNames {
+		fmt.Printf("%s:%s ", flood.Buttons(i), n)
+	}
+	fmt.Println()
 
 	return nil
 }

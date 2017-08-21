@@ -17,15 +17,6 @@ import (
 
 type Buttons uint
 
-const (
-	Purple Buttons = iota
-	Blue
-	Green
-	Yellow
-	Red
-	Pink
-)
-
 var letters = "ABCDEF"
 
 func (b Buttons) String() string {
@@ -35,19 +26,20 @@ func (b Buttons) String() string {
 }
 
 type Game struct {
-	Image      image.Image
-	Level      string
-	Size       int
-	At         [][]Buttons
-	minX, minY int
-	maxX, maxY int
-	lenX, lenY int
+	Image       image.Image
+	Level       string
+	Size        int
+	At          [][]Buttons
+	ButtonNames [6]string
+	minX, minY  int
+	maxX, maxY  int
+	lenX, lenY  int
 }
 
 func (g *Game) LoadImage(filename string) (err error) {
 	reader, err := os.Open(filename)
 	if err != nil {
-		return errors.Wrapf(err, "ExtractFile:")
+		return errors.Wrapf(err, "LoadImage:")
 	}
 	defer reader.Close()
 
@@ -143,6 +135,51 @@ func (g *Game) IdentifyLevel() (err error) {
 	return
 }
 
+var colorNames = [...]string{"Purple", "Blue", "Green", "Yellow", "Red", "Pink"}
+
+func (g *Game) ExtractButtons() (err error) {
+	m := g.Image
+	bmy := m.Bounds().Max.Y
+
+	var nb int = 6 // number of buttons
+
+	minX, minY := 22, 94
+	widthX, widthY := 598, 80
+	//maxX, maxY := minX+widthX, minY+widthY
+
+	for n := 0; n < nb; n++ {
+		px := minX + (n * (widthX / nb))
+		py := minY
+		// Mid-point
+		mx := px + (widthX / nb / 2)
+		my := py + (widthY / 2)
+		cl := []color.Color{
+			m.At(mx-1, bmy-(my-1)), m.At(mx, bmy-(my-1)), m.At(mx+1, bmy-(my-1)),
+			m.At(mx-1, bmy-(my)), m.At(mx, bmy-(my)), m.At(mx+1, bmy-(my)),
+			m.At(mx-1, bmy-(my+1)), m.At(mx, bmy-(my+1)), m.At(mx+1, bmy-(my+1)),
+		}
+		//		fmt.Printf("BUTTON %d: %d:%d %d:%d %d:%d\n",
+		//			n,
+		//			px, py,
+		//			mx, my,
+		//			widthX/nb/2,
+		//			widthY/2,
+		//		)
+		c, err := vote(cl)
+		if err != nil {
+			fmt.Printf("\nERROR: %s (c=%v)\n", err, c)
+			return errors.Wrapf(err, "ExtractButtons:")
+		}
+		ci := nearestColor(c, button2color)
+		//fmt.Printf("BUTTON %d: %s\n", n, ci)
+		//fmt.Printf("%v\n", cl)
+
+		g.ButtonNames[n] = colorNames[ci]
+	}
+
+	return nil
+}
+
 func (g *Game) ExtractGrid() (err error) {
 	sz := g.Size
 	m := g.Image
@@ -219,6 +256,7 @@ func vote(cl []color.Color) (color.Color, error) {
 }
 
 var color2letter = map[string]Buttons{}
+var button2color = map[Buttons]color.Color{}
 var lastletter Buttons
 
 func letter(c color.Color) Buttons {
@@ -229,17 +267,10 @@ func letter(c color.Color) Buttons {
 		return v
 	}
 	color2letter[u] = lastletter
+	button2color[lastletter] = c
 	ret := lastletter
 	lastletter++
 	return ret
-
-	//newletter := letters[lastletter : lastletter+1]
-	//lastletter++
-	//color2letter[u] = newletter
-	//return newletter
-
-	//r, g, b, _ := c.RGBA()
-	//return fmt.Sprintf(" (%d,%d,%d)", r, g, b)
 }
 
 func (g *Game) String() string {
@@ -251,4 +282,12 @@ func (g *Game) String() string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+func nearestColor(c color.Color, colormap map[Buttons]color.Color) Buttons {
+	p := color.Palette{}
+	for v := 0; v < 6; v++ {
+		p = append(p, colormap[Buttons(v)])
+	}
+	return Buttons(p.Index(c))
 }
