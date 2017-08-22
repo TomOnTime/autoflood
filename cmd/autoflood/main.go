@@ -61,10 +61,17 @@ func play(filename string) (err error) {
 	}
 
 	fmt.Printf("%s", game.String())
-	for i, n := range game.ButtonNames {
-		fmt.Printf("%s:%s ", flood.Buttons(i), n)
-	}
+	fmt.Println(game.ButtonLegend())
 	fmt.Println()
+
+	for _, b := range []flood.Buttons{1, 2, 0, 4, 1, 2, 3} {
+
+		fmt.Printf("Pressing button %v (%v)\n", flood.Buttons(b), b)
+		fmt.Printf("result=%v\n", game.At.ButtonPress(flood.Buttons(b)))
+
+		fmt.Printf("%s", game.String())
+		fmt.Println(game.ButtonLegend())
+	}
 
 	fmt.Println()
 

@@ -15,24 +15,28 @@ import (
 	// _ "image/jpeg"
 )
 
-type Buttons uint
+type Buttons uint8
 
 var letters = "ABCDEF"
+var colorNames = [...]string{"Purple", "Blue", "Green", "Yellow", "Red", "Pink"}
 
 func (b Buttons) String() string {
 	return letters[b : b+1]
 }
 
 type Game struct {
-	Image       image.Image
-	Level       string
-	Size        int
-	At          [][]Buttons
-	ButtonNames [6]string
-	minX, minY  int
-	maxX, maxY  int
-	lenX, lenY  int
+	Image        image.Image
+	Level        string
+	Size         int
+	At           State
+	ButtonNames  [6]string
+	ButtonColors map[string]Buttons
+	minX, minY   int
+	maxX, maxY   int
+	lenX, lenY   int
 }
+
+type State [][]Buttons
 
 func (g *Game) LoadImage(filename string) (err error) {
 	reader, err := os.Open(filename)
@@ -133,8 +137,6 @@ func (g *Game) IdentifyLevel() (err error) {
 	return
 }
 
-var colorNames = [...]string{"Purple", "Blue", "Green", "Yellow", "Red", "Pink"}
-
 func (g *Game) ExtractButtons() (err error) {
 	m := g.Image
 	bmy := m.Bounds().Max.Y
@@ -144,6 +146,7 @@ func (g *Game) ExtractButtons() (err error) {
 	minX, minY := 22, 94
 	widthX, widthY := 598, 80
 	//maxX, maxY := minX+widthX, minY+widthY
+	g.ButtonColors = map[string]Buttons{}
 
 	for n := 0; n < nb; n++ {
 		px := minX + (n * (widthX / nb))
@@ -168,9 +171,25 @@ func (g *Game) ExtractButtons() (err error) {
 		//fmt.Printf("%v\n", cl)
 
 		g.ButtonNames[n] = colorNames[ci]
+		g.ButtonColors[colorNames[ci]] = Buttons(n)
 	}
 
 	return nil
+}
+
+func (g *Game) ButtonLegend() string {
+	ret := bytes.NewBufferString("")
+	// Colorname:letter
+	for _, v := range colorNames {
+		fmt.Fprintf(ret, " %s:%v", v, g.ButtonColors[v])
+	}
+	fmt.Fprintln(ret)
+	for _, v := range []Buttons{0, 1, 2, 3, 4, 5} {
+		fmt.Fprintf(ret, " %v:%v", v, g.ButtonNames[v])
+	}
+	fmt.Fprintln(ret)
+	return ret.String()
+
 }
 
 func (g *Game) ExtractGrid() (err error) {
