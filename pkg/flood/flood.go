@@ -53,3 +53,13 @@ func (state State) fill(x, y int, search, replace Buttons, count int) int {
 	count += state.fill(x+1, y, search, replace, 0) // right
 	return count
 }
+
+func (st State) Copy() (dst State) {
+	for x, xv := range st {
+		dst = append(dst, make([]Buttons, len(xv)))
+		for y, yv := range xv {
+			dst[x][y] = yv
+		}
+	}
+	return dst
+}
