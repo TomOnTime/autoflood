@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -61,16 +62,30 @@ func play(filename string) (err error) {
 	}
 
 	fmt.Printf("%s", game.String())
-	fmt.Println(game.ButtonLegend())
+	fmt.Print(game.ButtonLegend())
 	fmt.Println()
 
-	for _, b := range []flood.Buttons{1, 2, 0, 4, 1, 2, 3} {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+
+		fmt.Print("Enter text: ")
+		text, _ := reader.ReadString('\n')
+		b, err := flood.InputToButton(text)
+		if err != nil {
+			fmt.Printf("ERROR: %s", err)
+			continue
+		}
 
 		fmt.Printf("Pressing button %v (%v)\n", flood.Buttons(b), b)
-		fmt.Printf("result=%v\n", game.At.ButtonPress(flood.Buttons(b)))
+		count, err := game.At.ButtonPress(flood.Buttons(b))
+		fmt.Printf("count=%d   error=%v\n", count, err)
+		if err != nil {
+			continue
+		}
 
 		fmt.Printf("%s", game.String())
-		fmt.Println(game.ButtonLegend())
+		fmt.Print(game.ButtonLegend())
 	}
 
 	fmt.Println()

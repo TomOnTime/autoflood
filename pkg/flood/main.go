@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -302,4 +303,26 @@ func nearestColor(c color.Color, colormap map[Buttons]color.Color) Buttons {
 		p = append(p, colormap[Buttons(v)])
 	}
 	return Buttons(p.Index(c))
+}
+
+func InputToButton(s string) (Buttons, error) {
+	if s == "" {
+		return 0, errors.Errorf("invalid input: %s")
+	}
+
+	switch strings.TrimSpace(s) {
+	case "1", "A", "a":
+		return 0, nil
+	case "2", "B", "b":
+		return 1, nil
+	case "3", "C", "c":
+		return 2, nil
+	case "4", "D", "d":
+		return 3, nil
+	case "5", "E", "e":
+		return 4, nil
+	case "6", "F", "f":
+		return 5, nil
+	}
+	return 0, errors.Errorf("invalid input: %s")
 }
