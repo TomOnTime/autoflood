@@ -28,6 +28,7 @@ func (b Buttons) String() string {
 type Game struct {
 	Image        image.Image
 	Level        string
+	MaxMoves     int
 	Size         int
 	At           State
 	ButtonNames  [6]string
@@ -120,12 +121,15 @@ func (g *Game) IdentifyLevel() (err error) {
 			case 24:
 				g.Level = "LARGE"
 				g.Size = 22
+				g.MaxMoves = 22
 			case 32, 64:
 				g.Level = "MEDIUM"
 				g.Size = 17
+				g.MaxMoves = 30
 			case 48:
 				g.Level = "SMALL"
 				g.Size = 12
+				g.MaxMoves = 36
 			default:
 			}
 		}
@@ -305,9 +309,10 @@ func nearestColor(c color.Color, colormap map[Buttons]color.Color) Buttons {
 	return Buttons(p.Index(c))
 }
 
-func InputToButton(s string) (Buttons, error) {
+func InputToButton(s string, def Buttons) (Buttons, error) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return 0, errors.Errorf("invalid input: %s")
+		return def, nil
 	}
 
 	switch strings.TrimSpace(s) {
@@ -324,5 +329,17 @@ func InputToButton(s string) (Buttons, error) {
 	case "6", "F", "f":
 		return 5, nil
 	}
-	return 0, errors.Errorf("invalid input: %s")
+	return 0, errors.Errorf("invalid input (%s)", s)
+}
+
+func (g *Game) Won() bool {
+	v := g.At[0][0]
+	for _, xv := range g.At {
+		for _, yv := range xv {
+			if v != yv {
+				return false
+			}
+		}
+	}
+	return true
 }

@@ -67,17 +67,22 @@ func play(filename string) (err error) {
 
 	reader := bufio.NewReader(os.Stdin)
 
+	moves := 0
+
 	for {
 
-		fmt.Print("Enter text: ")
+		//fmt.Printf("Enter text: ")
+		sugg := game.Search()
+		fmt.Printf("Enter text: (suggest=%v): ", sugg)
 		text, _ := reader.ReadString('\n')
-		b, err := flood.InputToButton(text)
+		b, err := flood.InputToButton(text, sugg)
 		if err != nil {
 			fmt.Printf("ERROR: %s", err)
 			continue
 		}
 
 		fmt.Printf("Pressing button %v (%v)\n", flood.Buttons(b), b)
+		moves++
 		count, err := game.At.ButtonPress(flood.Buttons(b))
 		fmt.Printf("count=%d   error=%v\n", count, err)
 		if err != nil {
@@ -86,6 +91,15 @@ func play(filename string) (err error) {
 
 		fmt.Printf("%s", game.String())
 		fmt.Print(game.ButtonLegend())
+
+		if game.Won() {
+			fmt.Println("You won!!!")
+			break
+		}
+		if moves > game.MaxMoves {
+			fmt.Println("No more moves!")
+			break
+		}
 	}
 
 	fmt.Println()
