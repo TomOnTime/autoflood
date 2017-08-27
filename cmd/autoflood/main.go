@@ -13,21 +13,60 @@ import (
 func main() {
 	app := cli.NewApp()
 
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "lang",
-			Value: "english",
-			Usage: "language for the greeting",
-		},
-	}
+	app.Commands = []cli.Command{
+		{
+			Name:    "stats",
+			Aliases: []string{"s"},
+			Usage:   "print stats about this game board",
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					return errors.Errorf("Must specify 1 file on the command line.")
+				}
+				filename := c.Args().Get(0)
+				fmt.Printf("FILE=%q\n", filename)
 
-	app.Action = func(c *cli.Context) error {
-		if c.NArg() != 1 {
-			return errors.Errorf("Must specify 1 file on the command line.")
-		}
-		filename := c.Args().Get(0)
-		fmt.Printf("FILE=%q\n", filename)
-		return play(filename)
+				_, err := initialize(filename)
+				return err
+			},
+		},
+		{
+			Name:    "play1",
+			Aliases: []string{"1", "play"},
+			Usage:   "play the game with simple suggestions",
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					return errors.Errorf("Must specify 1 file on the command line.")
+				}
+				filename := c.Args().Get(0)
+				fmt.Printf("FILE=%q\n", filename)
+
+				game, err := initialize(filename)
+				if err != nil {
+					return err
+				}
+
+				return playManual(game, game.Search1)
+			},
+		},
+		{
+			Name:    "play2",
+			Aliases: []string{"2"},
+			Usage:   "play the game with multi-level suggestions",
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					return errors.Errorf("Must specify 1 file on the command line.")
+				}
+				filename := c.Args().Get(0)
+				fmt.Printf("FILE=%q\n", filename)
+
+				game, err := initialize(filename)
+				if err != nil {
+					return err
+				}
+
+				return playManual(game, game.SearchMultiLevel)
+			},
+		},
 	}
 
 	err := app.Run(os.Args)
@@ -38,8 +77,7 @@ func main() {
 
 }
 
-func play(filename string) (err error) {
-	var game flood.Game
+func initialize(filename string) (game flood.Game, err error) {
 
 	err = game.LoadImage(filename)
 	if err != nil {
@@ -65,6 +103,11 @@ func play(filename string) (err error) {
 	fmt.Print(game.ButtonLegend())
 	fmt.Println()
 
+	return
+}
+
+func playManual(game flood.Game, suggest func() flood.Buttons) (err error) {
+
 	reader := bufio.NewReader(os.Stdin)
 
 	moves := 0
@@ -72,7 +115,7 @@ func play(filename string) (err error) {
 	for {
 
 		//fmt.Printf("Enter text: ")
-		sugg := game.Search()
+		sugg := suggest()
 		fmt.Printf("%d) Enter text: (suggest=%v): ", moves, sugg)
 		text, _ := reader.ReadString('\n')
 		b, err := flood.InputToButton(text, sugg)

@@ -3,7 +3,7 @@ package flood
 import "fmt"
 
 // Search for the best next move.
-func (g *Game) Search1() Buttons {
+func (g *Game) SearchMultiLevel() Buttons {
 
 	count := -1
 	best := Buttons(99)
