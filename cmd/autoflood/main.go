@@ -12,6 +12,8 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Name = "autoflood"
+	app.Version = "1.0"
 
 	app.Commands = []cli.Command{
 		{
