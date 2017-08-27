@@ -22,3 +22,24 @@ func (g *Game) Search1() Buttons {
 	fmt.Printf(" Best: %v %d\n", best, max)
 	return best
 }
+
+// try attempts a button press without modifying the game.
+func (g *Game) try(b Buttons) int {
+	st := g.At.Copy()
+	_, err := st.ButtonPress(b)
+	if err != nil {
+		return 0
+	}
+
+	var nb int = 6 // number of buttons
+
+	second := b - 1
+	if second < 0 {
+		second = Buttons(nb - 1)
+	}
+	count, err := st.ButtonPress(second)
+	if err != nil {
+		return 0
+	}
+	return count
+}

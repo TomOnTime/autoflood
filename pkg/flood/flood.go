@@ -53,24 +53,3 @@ func (state State) fill(x, y int, search, replace Buttons, count int) int {
 	count += state.fill(x+1, y, search, replace, 0) // right
 	return count
 }
-
-// try attempts a button press without modifying the game.
-func (g *Game) try(b Buttons) int {
-	st := g.At.Copy()
-	_, err := st.ButtonPress(b)
-	if err != nil {
-		return 0
-	}
-
-	var nb int = 6 // number of buttons
-
-	second := b - 1
-	if second < 0 {
-		second = Buttons(nb - 1)
-	}
-	count, err := st.ButtonPress(second)
-	if err != nil {
-		return 0
-	}
-	return count
-}
