@@ -10,7 +10,7 @@ func (g *Game) SearchMultiLevel() Buttons {
 	var max int
 
 	for _, b := range [...]Buttons{0, 1, 2, 3, 4, 5} {
-		count = g.try(b)
+		count = g.trymulti(b)
 		fmt.Printf("Button %v would score %d\n", b, count)
 		if count > max {
 			max = count
@@ -22,7 +22,7 @@ func (g *Game) SearchMultiLevel() Buttons {
 }
 
 // try attempts a button press without modifying the game.
-func (g *Game) try(b Buttons) int {
+func (g *Game) trymulti(b Buttons) int {
 	st := g.At.Copy()
 	_, err := st.ButtonPress(b)
 	if err != nil {
