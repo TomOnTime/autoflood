@@ -4,7 +4,7 @@ import "github.com/pkg/errors"
 
 // Flood Performs a floodfill on a State, starting at top,left, replacing
 // target with sub.
-func (state State) ButtonPress(replace Buttons) (int, error) {
+func (state State) ButtonPress(replace Buttons) (Score, error) {
 
 	ly := len(state[0]) - 1
 	search := state[0][ly]
@@ -25,7 +25,7 @@ func (state State) ButtonPress(replace Buttons) (int, error) {
 // fill is the workhorse of ButtonPress, flood filling starting
 // at x, y, finding search and replacing it with replace. It returns
 // the number of elements replaced.
-func (state State) fill(x, y int, search, replace Buttons, count int) int {
+func (state State) fill(x, y int, search, replace Buttons, count Score) Score {
 	//fmt.Printf("fill(%d, %d, %v, %v)", x, y, search, replace)
 	// Illegal location:
 	if x < 0 || x >= len(state) || y < 0 || y >= len(state) {

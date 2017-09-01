@@ -5,9 +5,8 @@ import "fmt"
 // Search for the best next move.
 func (g *Game) Search1() Buttons {
 
-	count := -1
+	var count, max Score
 	best := Buttons(99)
-	var max int
 
 	for _, b := range [...]Buttons{0, 1, 2, 3, 4, 5} {
 		//count = g.try(Buttons(b))
@@ -24,7 +23,7 @@ func (g *Game) Search1() Buttons {
 }
 
 // try attempts a button press without modifying the game.
-func (g *Game) try(b Buttons) int {
+func (g *Game) try(b Buttons) Score {
 	st := g.At.Copy()
 	_, err := st.ButtonPress(b)
 	if err != nil {

@@ -29,6 +29,7 @@ type Game struct {
 	Image        image.Image
 	Level        string
 	MaxMoves     int
+	WinScore     Score
 	Size         int
 	At           State
 	ButtonNames  [6]string
@@ -120,14 +121,17 @@ func (g *Game) IdentifyLevel() (err error) {
 				g.Level = "LARGE"
 				g.Size = 22
 				g.MaxMoves = 36
+				g.WinScore = 22 * 22
 			case 32, 64:
 				g.Level = "MEDIUM"
 				g.Size = 17
 				g.MaxMoves = 30
+				g.WinScore = 17 * 17
 			case 48:
 				g.Level = "SMALL"
 				g.Size = 12
 				g.MaxMoves = 22
+				g.WinScore = 12 * 12
 			default:
 			}
 		}
